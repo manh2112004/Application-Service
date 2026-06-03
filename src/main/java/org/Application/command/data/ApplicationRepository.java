@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ApplicationRepository extends JpaRepository<Application, String>, JpaSpecificationExecutor<Application> {
     boolean existsByCandidateIdAndJobId(String candidateId, String jobId);
+    java.util.List<Application> findAllByCandidateIdAndIsDeletedFalse(String candidateId);
 }

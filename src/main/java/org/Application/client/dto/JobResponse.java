@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class JobResponse {
     private String id;
     private String companyId;
+    private String title;
 }

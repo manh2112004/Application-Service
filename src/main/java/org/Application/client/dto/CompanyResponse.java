@@ -9,5 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CompanyResponse {
     private String id;
-    private String status; // CompanyStatus (ACTIVE, PENDING, etc.)
+    private String status;
+    private String companyName;
+    private String logoUrl;
 }
