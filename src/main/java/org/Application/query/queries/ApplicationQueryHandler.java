@@ -50,6 +50,7 @@ public class ApplicationQueryHandler {
                     JobResponse job = null;
                     try {
                         job = jobCache.computeIfAbsent(app.getJobId(), id -> jobClient.getJob(id));
+                        log.info("Fetched job details for jobId={}: {}", app.getJobId(), job);
                     } catch (Exception e) {
                         log.warn("Failed to fetch job details for jobId={} in query: {}", app.getJobId(), e.getMessage());
                     }
@@ -80,5 +81,54 @@ public class ApplicationQueryHandler {
                 .collect(Collectors.toList());
 
         return new MyApplicationsListResponse(list);
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public MyApplicationResponse handle(GetMyApplicationDetailQuery query) {
+        Application app = applicationRepository.findById(query.getApplicationId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(app.getIsDeleted())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        if (!app.getCandidateId().equals(query.getCandidateId())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập hồ sơ này");
+        }
+
+        // Enrich Job details
+        JobResponse job = null;
+        try {
+            job = jobClient.getJob(app.getJobId());
+        } catch (Exception e) {
+            log.warn("Failed to fetch job details for jobId={} in query: {}", app.getJobId(), e.getMessage());
+        }
+
+        // Enrich Company details
+        CompanyResponse company = null;
+        try {
+            company = companyClient.getCompany(app.getCompanyId());
+        } catch (Exception e) {
+            log.warn("Failed to fetch company details for companyId={} in query: {}", app.getCompanyId(), e.getMessage());
+        }
+
+        return MyApplicationResponse.builder()
+                .id(app.getId())
+                .jobId(app.getJobId())
+                .companyId(app.getCompanyId())
+                .jobTitle(job != null ? job.getTitle() : "Công việc không khả dụng")
+                .companyName(company != null ? company.getCompanyName() : "Công ty không khả dụng")
+                .companyLogoUrl(company != null ? company.getLogoUrl() : null)
+                .appliedDate(app.getAppliedDate())
+                .status(app.getStatus())
+                .rating(app.getRating())
+                .resumeFileUrl(app.getResumeFileUrl())
+                .coverLetter(app.getCoverLetter())
+                .createdAt(app.getCreatedAt())
+                .build();
     }
 }
