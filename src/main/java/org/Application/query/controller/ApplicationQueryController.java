@@ -3,9 +3,11 @@ package org.Application.query.controller;
 import org.Application.query.model.response.MyApplicationsListResponse;
 import org.Application.query.model.response.MyApplicationResponse;
 import org.Application.query.model.response.MyDashboardResponse;
+import org.Application.query.model.response.MyInterviewsListResponse;
 import org.Application.query.queries.GetMyApplicationDetailQuery;
 import org.Application.query.queries.GetMyApplicationsQuery;
 import org.Application.query.queries.GetMyDashboardQuery;
+import org.Application.query.queries.GetMyInterviewsQuery;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,14 @@ public class ApplicationQueryController {
         return queryGateway.query(
                 new GetMyDashboardQuery(jwt.getSubject()),
                 ResponseTypes.instanceOf(MyDashboardResponse.class)
+        );
+    }
+
+    @GetMapping("/my/interviews")
+    public CompletableFuture<MyInterviewsListResponse> getMyInterviews(@AuthenticationPrincipal Jwt jwt) {
+        return queryGateway.query(
+                new GetMyInterviewsQuery(jwt.getSubject()),
+                ResponseTypes.instanceOf(MyInterviewsListResponse.class)
         );
     }
 

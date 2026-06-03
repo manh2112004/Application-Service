@@ -7,9 +7,13 @@ import org.Application.client.dto.CompanyResponse;
 import org.Application.client.dto.JobResponse;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
+import org.Application.command.data.InterviewSchedule;
+import org.Application.command.data.InterviewScheduleRepository;
 import org.Application.query.model.response.MyApplicationResponse;
 import org.Application.query.model.response.MyApplicationsListResponse;
 import org.Application.query.model.response.MyDashboardResponse;
+import org.Application.query.model.response.MyInterviewResponse;
+import org.Application.query.model.response.MyInterviewsListResponse;
 import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,6 +30,9 @@ public class ApplicationQueryHandler {
 
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private InterviewScheduleRepository interviewScheduleRepository;
 
     @Autowired
     private JobClient jobClient;
@@ -173,5 +180,82 @@ public class ApplicationQueryHandler {
                 .declinedCount(declined)
                 .unsuitableCount(unsuitable)
                 .build();
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public MyInterviewsListResponse handle(GetMyInterviewsQuery query) {
+        List<Application> applications = applicationRepository.findAllByCandidateIdAndIsDeletedFalse(query.getCandidateId());
+        if (applications.isEmpty()) {
+            return new MyInterviewsListResponse(java.util.Collections.emptyList());
+        }
+
+        List<String> applicationIds = applications.stream()
+                .map(Application::getId)
+                .collect(Collectors.toList());
+
+        List<InterviewSchedule> schedules = interviewScheduleRepository.findAllByApplicationIdIn(applicationIds);
+
+        Map<String, Application> appMap = applications.stream()
+                .collect(Collectors.toMap(Application::getId, app -> app));
+
+        Map<String, JobResponse> jobCache = new HashMap<>();
+        Map<String, CompanyResponse> companyCache = new HashMap<>();
+
+        List<MyInterviewResponse> list = schedules.stream()
+                .sorted((a, b) -> {
+                    if (a.getInterviewDate() == null || b.getInterviewDate() == null) return 0;
+                    int dateCompare = b.getInterviewDate().compareTo(a.getInterviewDate());
+                    if (dateCompare != 0) return dateCompare;
+                    if (a.getStartTime() == null || b.getStartTime() == null) return 0;
+                    return b.getStartTime().compareTo(a.getStartTime());
+                })
+                .map(sch -> {
+                    Application app = appMap.get(sch.getApplicationId());
+                    String jobTitle = "Công việc không khả dụng";
+                    String companyName = "Công ty không khả dụng";
+                    String companyLogoUrl = null;
+
+                    if (app != null) {
+                        // Enrich Job details
+                        try {
+                            JobResponse job = jobCache.computeIfAbsent(app.getJobId(), id -> jobClient.getJob(id));
+                            if (job != null) {
+                                jobTitle = job.getTitle();
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to fetch job details for jobId={} in interviews query: {}", app.getJobId(), e.getMessage());
+                        }
+
+                        // Enrich Company details
+                        try {
+                            CompanyResponse company = companyCache.computeIfAbsent(app.getCompanyId(), id -> companyClient.getCompany(id));
+                            if (company != null) {
+                                companyName = company.getCompanyName();
+                                companyLogoUrl = company.getLogoUrl();
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to fetch company details for companyId={} in interviews query: {}", app.getCompanyId(), e.getMessage());
+                        }
+                    }
+
+                    return MyInterviewResponse.builder()
+                            .id(sch.getId())
+                            .applicationId(sch.getApplicationId())
+                            .jobTitle(jobTitle)
+                            .companyName(companyName)
+                            .companyLogoUrl(companyLogoUrl)
+                            .title(sch.getTitle())
+                            .interviewDate(sch.getInterviewDate())
+                            .startTime(sch.getStartTime())
+                            .endTime(sch.getEndTime())
+                            .location(sch.getLocation())
+                            .status(sch.getStatus())
+                            .interviewerName(sch.getInterviewerName())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return new MyInterviewsListResponse(list);
     }
 }
