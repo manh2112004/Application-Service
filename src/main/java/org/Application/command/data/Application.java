@@ -22,6 +22,17 @@ public class Application {
     @Column(nullable = false)
     private String candidateId;
 
+    @Column(nullable = false)
+    private String fullName;
+
+    @Column(nullable = false)
+    private String email;
+
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    private String currentJobTitle;
+
     // lấy từ Job Service
     @Column(nullable = false)
     private String jobId;
