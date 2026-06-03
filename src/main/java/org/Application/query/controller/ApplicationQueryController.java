@@ -2,8 +2,10 @@ package org.Application.query.controller;
 
 import org.Application.query.model.response.MyApplicationsListResponse;
 import org.Application.query.model.response.MyApplicationResponse;
+import org.Application.query.model.response.MyDashboardResponse;
 import org.Application.query.queries.GetMyApplicationDetailQuery;
 import org.Application.query.queries.GetMyApplicationsQuery;
+import org.Application.query.queries.GetMyDashboardQuery;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,14 @@ public class ApplicationQueryController {
         return queryGateway.query(
                 new GetMyApplicationsQuery(jwt.getSubject()),
                 ResponseTypes.instanceOf(MyApplicationsListResponse.class)
+        );
+    }
+
+    @GetMapping("/my/dashboard")
+    public CompletableFuture<MyDashboardResponse> getMyDashboard(@AuthenticationPrincipal Jwt jwt) {
+        return queryGateway.query(
+                new GetMyDashboardQuery(jwt.getSubject()),
+                ResponseTypes.instanceOf(MyDashboardResponse.class)
         );
     }
 

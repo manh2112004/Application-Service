@@ -9,6 +9,7 @@ import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.query.model.response.MyApplicationResponse;
 import org.Application.query.model.response.MyApplicationsListResponse;
+import org.Application.query.model.response.MyDashboardResponse;
 import org.axonframework.queryhandling.QueryHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -129,6 +130,48 @@ public class ApplicationQueryHandler {
                 .resumeFileUrl(app.getResumeFileUrl())
                 .coverLetter(app.getCoverLetter())
                 .createdAt(app.getCreatedAt())
+                .build();
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public MyDashboardResponse handle(GetMyDashboardQuery query) {
+        List<Application> applications = applicationRepository.findAllByCandidateIdAndIsDeletedFalse(query.getCandidateId());
+
+        long total = applications.size();
+        long inReview = 0;
+        long shortlisted = 0;
+        long interview = 0;
+        long assessment = 0;
+        long offered = 0;
+        long hired = 0;
+        long declined = 0;
+        long unsuitable = 0;
+
+        for (Application app : applications) {
+            if (app.getStatus() == null) continue;
+            switch (app.getStatus()) {
+                case IN_REVIEW -> inReview++;
+                case SHORTLISTED -> shortlisted++;
+                case INTERVIEW -> interview++;
+                case ASSESSMENT -> assessment++;
+                case OFFERED -> offered++;
+                case HIRED -> hired++;
+                case DECLINED -> declined++;
+                case UNSUITABLE -> unsuitable++;
+            }
+        }
+
+        return MyDashboardResponse.builder()
+                .totalApplications(total)
+                .inReviewCount(inReview)
+                .shortlistedCount(shortlisted)
+                .interviewCount(interview)
+                .assessmentCount(assessment)
+                .offeredCount(offered)
+                .hiredCount(hired)
+                .declinedCount(declined)
+                .unsuitableCount(unsuitable)
                 .build();
     }
 }
