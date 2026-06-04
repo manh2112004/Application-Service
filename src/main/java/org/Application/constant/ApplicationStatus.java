@@ -8,5 +8,6 @@ public enum ApplicationStatus {
     OFFERED,
     HIRED,
     DECLINED,
-    UNSUITABLE
+    UNSUITABLE,
+    WITHDRAWN
 }

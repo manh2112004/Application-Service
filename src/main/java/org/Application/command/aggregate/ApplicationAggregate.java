@@ -1,7 +1,9 @@
 package org.Application.command.aggregate;
 
 import org.Application.command.command.CreateApplicationCommand;
+import org.Application.command.command.WithdrawApplicationCommand;
 import org.Application.command.event.ApplicationCreatedEvent;
+import org.Application.command.event.ApplicationWithdrawnEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -37,8 +39,21 @@ public class ApplicationAggregate {
                 .build());
     }
 
+    @CommandHandler
+    public void handle(WithdrawApplicationCommand command) {
+        AggregateLifecycle.apply(ApplicationWithdrawnEvent.builder()
+                .applicationId(command.getApplicationId())
+                .candidateId(command.getCandidateId())
+                .build());
+    }
+
     @EventSourcingHandler
     public void on(ApplicationCreatedEvent event) {
+        this.applicationId = event.getApplicationId();
+    }
+
+    @EventSourcingHandler
+    public void on(ApplicationWithdrawnEvent event) {
         this.applicationId = event.getApplicationId();
     }
 }

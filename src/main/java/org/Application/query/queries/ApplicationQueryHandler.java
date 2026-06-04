@@ -173,6 +173,7 @@ public class ApplicationQueryHandler {
                 case HIRED -> hired++;
                 case DECLINED -> declined++;
                 case UNSUITABLE -> unsuitable++;
+                case WITHDRAWN -> {}
             }
         }
 

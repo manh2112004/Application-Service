@@ -24,4 +24,12 @@ public class ApplicationCommandController {
     ) {
         return applicationService.createApplication(jwt.getSubject(), request);
     }
+
+    @PutMapping("/{applicationId}/withdraw")
+    public CompletableFuture<String> withdrawApplication(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String applicationId
+    ) {
+        return applicationService.withdrawApplication(jwt.getSubject(), applicationId);
+    }
 }

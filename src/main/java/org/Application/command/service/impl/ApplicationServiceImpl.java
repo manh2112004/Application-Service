@@ -1,6 +1,8 @@
 package org.Application.command.service.impl;
 
 import org.Application.command.command.CreateApplicationCommand;
+import org.Application.command.command.WithdrawApplicationCommand;
+import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.model.request.CreateApplicationRequest;
 import org.Application.command.service.ApplicationService;
@@ -71,6 +73,35 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .portfolioUrl(request.getPortfolioUrl() != null ? request.getPortfolioUrl().trim() : null)
                 .resumeFileUrl(request.getResumeFileUrl() != null ? request.getResumeFileUrl().trim() : null)
                 .status(ApplicationStatus.IN_REVIEW) // Initial status when applying
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> withdrawApplication(String candidateId, String applicationId) {
+        if (candidateId == null || candidateId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng từ token");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        if (!application.getCandidateId().equals(candidateId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền rút hồ sơ này");
+        }
+
+        if (application.getStatus() == ApplicationStatus.WITHDRAWN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hồ sơ ứng tuyển đã được rút trước đó");
+        }
+
+        WithdrawApplicationCommand command = WithdrawApplicationCommand.builder()
+                .applicationId(applicationId)
+                .candidateId(candidateId)
                 .build();
 
         return commandGateway.send(command);
