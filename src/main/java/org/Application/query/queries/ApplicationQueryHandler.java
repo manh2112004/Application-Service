@@ -28,6 +28,7 @@ import org.Application.query.model.response.JobApplicationPageResponse;
 import org.Application.query.model.response.JobPipelineResponse;
 import org.Application.query.queries.GetJobApplicationsQuery;
 import org.Application.query.queries.GetJobPipelineQuery;
+import org.Application.query.queries.SearchJobApplicationsQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +58,78 @@ public class ApplicationQueryHandler {
 
     @Autowired
     private CompanyClient companyClient;
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public JobApplicationPageResponse handle(SearchJobApplicationsQuery query) {
+        if (query.getPage() < 1) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "page phải >= 1");
+        }
+        if (query.getSize() <= 0 || query.getSize() > 100) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "size phải trong khoảng 1..100");
+        }
+
+        Pageable pageable = PageRequest.of(
+                query.getPage() - 1, // converting 1-indexed to 0-indexed
+                query.getSize(),
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Specification<Application> spec = Specification.where((root, cq, cb) ->
+                cb.and(
+                        cb.equal(root.get("jobId"), query.getJobId()),
+                        cb.equal(root.get("isDeleted"), false)
+                )
+        );
+
+        if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
+            String keyword = "%" + query.getKeyword().toLowerCase().trim() + "%";
+            spec = spec.and((root, cq, cb) ->
+                    cb.or(
+                            cb.like(cb.lower(root.get("fullName")), keyword),
+                            cb.like(cb.lower(root.get("email")), keyword),
+                            cb.like(cb.lower(root.get("currentJobTitle")), keyword),
+                            cb.like(cb.lower(root.get("coverLetter")), keyword)
+                    )
+            );
+        }
+
+        Page<Application> appPage = applicationRepository.findAll(spec, pageable);
+
+        List<JobApplicationResponse> list = appPage.getContent().stream()
+                .map(app -> JobApplicationResponse.builder()
+                        .id(app.getId())
+                        .candidateId(app.getCandidateId())
+                        .fullName(app.getFullName())
+                        .email(app.getEmail())
+                        .phoneNumber(app.getPhoneNumber())
+                        .currentJobTitle(app.getCurrentJobTitle())
+                        .jobId(app.getJobId())
+                        .companyId(app.getCompanyId())
+                        .status(app.getStatus())
+                        .rating(app.getRating())
+                        .appliedDate(app.getAppliedDate())
+                        .followUpRequested(app.getFollowUpRequested())
+                        .followUpRequestedAt(app.getFollowUpRequestedAt())
+                        .coverLetter(app.getCoverLetter())
+                        .linkedinUrl(app.getLinkedinUrl())
+                        .portfolioUrl(app.getPortfolioUrl())
+                        .resumeFileUrl(app.getResumeFileUrl())
+                        .createdAt(app.getCreatedAt())
+                        .updatedAt(app.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return new JobApplicationPageResponse(
+                list,
+                appPage.getNumber() + 1,
+                appPage.getSize(),
+                appPage.getTotalElements(),
+                appPage.getTotalPages()
+        );
+    }
 
     @QueryHandler
     @Transactional(readOnly = true)
