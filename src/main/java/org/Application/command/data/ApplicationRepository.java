@@ -9,4 +9,5 @@ public interface ApplicationRepository extends JpaRepository<Application, String
     boolean existsByCandidateIdAndJobId(String candidateId, String jobId);
     java.util.List<Application> findAllByCandidateIdAndIsDeletedFalse(String candidateId);
     java.util.List<Application> findAllByJobIdAndIsDeletedFalse(String jobId);
+    java.util.List<Application> findAllByCompanyIdAndIsDeletedFalse(String companyId);
 }

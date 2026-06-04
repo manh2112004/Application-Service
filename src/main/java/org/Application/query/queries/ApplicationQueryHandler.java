@@ -26,8 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.Application.query.model.response.JobApplicationResponse;
 import org.Application.query.model.response.JobApplicationPageResponse;
 import org.Application.query.model.response.JobPipelineResponse;
+import org.Application.query.model.response.RecruiterDashboardResponse;
 import org.Application.query.queries.GetJobApplicationsQuery;
 import org.Application.query.queries.GetJobPipelineQuery;
+import org.Application.query.queries.GetRecruiterDashboardQuery;
 import org.Application.query.queries.SearchJobApplicationsQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -58,6 +60,52 @@ public class ApplicationQueryHandler {
 
     @Autowired
     private CompanyClient companyClient;
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public RecruiterDashboardResponse handle(GetRecruiterDashboardQuery query) {
+        List<Application> applications = applicationRepository.findAllByCompanyIdAndIsDeletedFalse(query.getCompanyId());
+
+        long total = applications.size();
+        long inReview = 0;
+        long shortlisted = 0;
+        long interview = 0;
+        long assessment = 0;
+        long offered = 0;
+        long hired = 0;
+        long declined = 0;
+        long unsuitable = 0;
+        long withdrawn = 0;
+
+        for (Application app : applications) {
+            if (app.getStatus() == null) continue;
+            switch (app.getStatus()) {
+                case IN_REVIEW -> inReview++;
+                case SHORTLISTED -> shortlisted++;
+                case INTERVIEW -> interview++;
+                case ASSESSMENT -> assessment++;
+                case OFFERED -> offered++;
+                case HIRED -> hired++;
+                case DECLINED -> declined++;
+                case UNSUITABLE -> unsuitable++;
+                case WITHDRAWN -> withdrawn++;
+            }
+        }
+
+        return RecruiterDashboardResponse.builder()
+                .companyId(query.getCompanyId())
+                .totalApplications(total)
+                .inReviewCount(inReview)
+                .shortlistedCount(shortlisted)
+                .interviewCount(interview)
+                .assessmentCount(assessment)
+                .offeredCount(offered)
+                .hiredCount(hired)
+                .declinedCount(declined)
+                .unsuitableCount(unsuitable)
+                .withdrawnCount(withdrawn)
+                .build();
+    }
 
     @QueryHandler
     @Transactional(readOnly = true)
