@@ -126,4 +126,14 @@ public class ApplicationEventHandler {
                 .build();
         applicationNoteRepository.save(note);
     }
+
+    @EventHandler
+    @Transactional
+    public void on(ApplicationNoteUpdatedEvent event) {
+        applicationNoteRepository.findById(event.getNoteId()).ifPresent(note -> {
+            note.setContent(event.getContent());
+            note.setUpdatedAt(LocalDateTime.now());
+            applicationNoteRepository.save(note);
+        });
+    }
 }

@@ -5,10 +5,14 @@ import org.Application.command.command.WithdrawApplicationCommand;
 import org.Application.command.command.UpdateApplicationStatusCommand;
 import org.Application.command.command.UpdateApplicationRatingCommand;
 import org.Application.command.command.AddApplicationNoteCommand;
+import org.Application.command.command.UpdateApplicationNoteCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
+import org.Application.command.data.ApplicationNote;
+import org.Application.command.data.ApplicationNoteRepository;
 import org.Application.command.model.request.CreateApplicationRequest;
 import org.Application.command.model.request.CreateApplicationNoteRequest;
+import org.Application.command.model.request.UpdateApplicationNoteRequest;
 import org.Application.command.service.ApplicationService;
 import org.Application.constant.ApplicationStatus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
@@ -28,6 +32,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private ApplicationNoteRepository applicationNoteRepository;
 
     @Autowired
     private org.Application.client.JobClient jobClient;
@@ -172,6 +179,36 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .noteId(UUID.randomUUID().toString())
                 .recruiterId(recruiterId)
                 .recruiterName(name)
+                .content(request.getContent().trim())
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> updateApplicationNote(String noteId, String recruiterId, UpdateApplicationNoteRequest request) {
+        if (recruiterId == null || recruiterId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng từ token");
+        }
+
+        ApplicationNote note = applicationNoteRepository.findById(noteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy ghi chú"));
+
+        if (!note.getRecruiterId().equals(recruiterId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền chỉnh sửa ghi chú này");
+        }
+
+        // Validate that the application exists and is not deleted
+        Application application = applicationRepository.findById(note.getApplicationId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển liên quan"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển liên quan");
+        }
+
+        UpdateApplicationNoteCommand command = UpdateApplicationNoteCommand.builder()
+                .applicationId(note.getApplicationId())
+                .noteId(noteId)
                 .content(request.getContent().trim())
                 .build();
 
