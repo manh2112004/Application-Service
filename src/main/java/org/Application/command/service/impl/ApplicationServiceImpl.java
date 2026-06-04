@@ -2,6 +2,7 @@ package org.Application.command.service.impl;
 
 import org.Application.command.command.CreateApplicationCommand;
 import org.Application.command.command.WithdrawApplicationCommand;
+import org.Application.command.command.UpdateApplicationStatusCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.model.request.CreateApplicationRequest;
@@ -102,6 +103,28 @@ public class ApplicationServiceImpl implements ApplicationService {
         WithdrawApplicationCommand command = WithdrawApplicationCommand.builder()
                 .applicationId(applicationId)
                 .candidateId(candidateId)
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> updateApplicationStatus(String applicationId, String changedBy, ApplicationStatus status) {
+        if (changedBy == null || changedBy.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng từ token");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        UpdateApplicationStatusCommand command = UpdateApplicationStatusCommand.builder()
+                .applicationId(applicationId)
+                .changedBy(changedBy)
+                .status(status)
                 .build();
 
         return commandGateway.send(command);

@@ -2,6 +2,7 @@ package org.Application.command.controller;
 
 import jakarta.validation.Valid;
 import org.Application.command.model.request.CreateApplicationRequest;
+import org.Application.command.model.request.UpdateApplicationStatusRequest;
 import org.Application.command.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,5 +32,14 @@ public class ApplicationCommandController {
             @PathVariable String applicationId
     ) {
         return applicationService.withdrawApplication(jwt.getSubject(), applicationId);
+    }
+
+    @PutMapping("/{applicationId}/status")
+    public CompletableFuture<String> updateApplicationStatus(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String applicationId,
+            @Valid @RequestBody UpdateApplicationStatusRequest request
+    ) {
+        return applicationService.updateApplicationStatus(applicationId, jwt.getSubject(), request.getStatus());
     }
 }

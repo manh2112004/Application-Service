@@ -74,4 +74,25 @@ public class ApplicationEventHandler {
             applicationStatusHistoryRepository.save(history);
         });
     }
+
+    @EventHandler
+    @Transactional
+    public void on(ApplicationStatusUpdatedEvent event) {
+        applicationRepository.findById(event.getApplicationId()).ifPresent(application -> {
+            ApplicationStatus oldStatus = application.getStatus();
+            application.setStatus(event.getStatus());
+            application.setUpdatedAt(LocalDateTime.now());
+            applicationRepository.save(application);
+
+            ApplicationStatusHistory history = ApplicationStatusHistory.builder()
+                    .id(UUID.randomUUID().toString())
+                    .applicationId(event.getApplicationId())
+                    .oldStatus(oldStatus)
+                    .newStatus(event.getStatus())
+                    .changedBy(event.getChangedBy())
+                    .changedAt(LocalDateTime.now())
+                    .build();
+            applicationStatusHistoryRepository.save(history);
+        });
+    }
 }
