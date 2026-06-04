@@ -2,7 +2,9 @@ package org.Application.query.controller;
 
 import org.Application.constant.ApplicationStatus;
 import org.Application.query.model.response.JobApplicationPageResponse;
+import org.Application.query.model.response.JobPipelineResponse;
 import org.Application.query.queries.GetJobApplicationsQuery;
+import org.Application.query.queries.GetJobPipelineQuery;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,14 @@ public class JobApplicationQueryController {
         return queryGateway.query(
                 new GetJobApplicationsQuery(jobId, page, size, keyword, status),
                 ResponseTypes.instanceOf(JobApplicationPageResponse.class)
+        );
+    }
+
+    @GetMapping("/{jobId}/pipeline")
+    public CompletableFuture<JobPipelineResponse> getJobPipeline(@PathVariable String jobId) {
+        return queryGateway.query(
+                new GetJobPipelineQuery(jobId),
+                ResponseTypes.instanceOf(JobPipelineResponse.class)
         );
     }
 }
