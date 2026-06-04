@@ -25,4 +25,12 @@ public class NoteCommandController {
     ) {
         return applicationService.updateApplicationNote(noteId, jwt.getSubject(), request);
     }
+
+    @DeleteMapping("/{noteId}")
+    public CompletableFuture<String> deleteNote(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String noteId
+    ) {
+        return applicationService.deleteApplicationNote(noteId, jwt.getSubject());
+    }
 }

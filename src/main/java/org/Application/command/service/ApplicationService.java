@@ -13,4 +13,5 @@ public interface ApplicationService {
     CompletableFuture<String> updateApplicationRating(String applicationId, Double rating);
     CompletableFuture<String> addApplicationNote(String applicationId, String recruiterId, CreateApplicationNoteRequest request);
     CompletableFuture<String> updateApplicationNote(String noteId, String recruiterId, UpdateApplicationNoteRequest request);
+    CompletableFuture<String> deleteApplicationNote(String noteId, String recruiterId);
 }

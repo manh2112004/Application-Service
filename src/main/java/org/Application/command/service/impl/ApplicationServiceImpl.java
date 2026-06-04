@@ -6,6 +6,7 @@ import org.Application.command.command.UpdateApplicationStatusCommand;
 import org.Application.command.command.UpdateApplicationRatingCommand;
 import org.Application.command.command.AddApplicationNoteCommand;
 import org.Application.command.command.UpdateApplicationNoteCommand;
+import org.Application.command.command.DeleteApplicationNoteCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.data.ApplicationNote;
@@ -210,6 +211,35 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .applicationId(note.getApplicationId())
                 .noteId(noteId)
                 .content(request.getContent().trim())
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> deleteApplicationNote(String noteId, String recruiterId) {
+        if (recruiterId == null || recruiterId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng từ token");
+        }
+
+        ApplicationNote note = applicationNoteRepository.findById(noteId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy ghi chú"));
+
+        if (!note.getRecruiterId().equals(recruiterId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền xóa ghi chú này");
+        }
+
+        // Validate that the application exists and is not deleted
+        Application application = applicationRepository.findById(note.getApplicationId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển liên quan"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển liên quan");
+        }
+
+        DeleteApplicationNoteCommand command = DeleteApplicationNoteCommand.builder()
+                .applicationId(note.getApplicationId())
+                .noteId(noteId)
                 .build();
 
         return commandGateway.send(command);

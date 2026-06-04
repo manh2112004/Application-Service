@@ -6,12 +6,14 @@ import org.Application.command.command.UpdateApplicationStatusCommand;
 import org.Application.command.command.UpdateApplicationRatingCommand;
 import org.Application.command.command.AddApplicationNoteCommand;
 import org.Application.command.command.UpdateApplicationNoteCommand;
+import org.Application.command.command.DeleteApplicationNoteCommand;
 import org.Application.command.event.ApplicationCreatedEvent;
 import org.Application.command.event.ApplicationWithdrawnEvent;
 import org.Application.command.event.ApplicationStatusUpdatedEvent;
 import org.Application.command.event.ApplicationRatingUpdatedEvent;
 import org.Application.command.event.ApplicationNoteAddedEvent;
 import org.Application.command.event.ApplicationNoteUpdatedEvent;
+import org.Application.command.event.ApplicationNoteDeletedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -92,6 +94,14 @@ public class ApplicationAggregate {
                 .build());
     }
 
+    @CommandHandler
+    public void handle(DeleteApplicationNoteCommand command) {
+        AggregateLifecycle.apply(ApplicationNoteDeletedEvent.builder()
+                .applicationId(command.getApplicationId())
+                .noteId(command.getNoteId())
+                .build());
+    }
+
     @EventSourcingHandler
     public void on(ApplicationCreatedEvent event) {
         this.applicationId = event.getApplicationId();
@@ -119,6 +129,11 @@ public class ApplicationAggregate {
 
     @EventSourcingHandler
     public void on(ApplicationNoteUpdatedEvent event) {
+        this.applicationId = event.getApplicationId();
+    }
+
+    @EventSourcingHandler
+    public void on(ApplicationNoteDeletedEvent event) {
         this.applicationId = event.getApplicationId();
     }
 }

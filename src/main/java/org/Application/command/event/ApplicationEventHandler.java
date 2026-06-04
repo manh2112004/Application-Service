@@ -136,4 +136,10 @@ public class ApplicationEventHandler {
             applicationNoteRepository.save(note);
         });
     }
+
+    @EventHandler
+    @Transactional
+    public void on(ApplicationNoteDeletedEvent event) {
+        applicationNoteRepository.deleteById(event.getNoteId());
+    }
 }
