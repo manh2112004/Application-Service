@@ -5,6 +5,8 @@ import org.Application.query.model.response.MyApplicationResponse;
 import org.Application.query.model.response.MyApplicationHistoryListResponse;
 import org.Application.query.model.response.MyDashboardResponse;
 import org.Application.query.model.response.MyInterviewsListResponse;
+import org.Application.query.model.response.JobApplicationResponse;
+import org.Application.query.queries.GetApplicationDetailQuery;
 import org.Application.query.queries.GetMyApplicationDetailQuery;
 import org.Application.query.queries.GetMyApplicationHistoryQuery;
 import org.Application.query.queries.GetMyApplicationsQuery;
@@ -28,6 +30,14 @@ public class ApplicationQueryController {
 
     @Autowired
     private QueryGateway queryGateway;
+
+    @GetMapping("/{applicationId}")
+    public CompletableFuture<JobApplicationResponse> getApplicationDetail(@PathVariable String applicationId) {
+        return queryGateway.query(
+                new GetApplicationDetailQuery(applicationId),
+                ResponseTypes.instanceOf(JobApplicationResponse.class)
+        );
+    }
 
     @GetMapping("/my")
     public CompletableFuture<MyApplicationsListResponse> getMyApplications(@AuthenticationPrincipal Jwt jwt) {

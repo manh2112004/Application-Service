@@ -234,6 +234,41 @@ public class ApplicationQueryHandler {
 
     @QueryHandler
     @Transactional(readOnly = true)
+    public JobApplicationResponse handle(GetApplicationDetailQuery query) {
+        Application app = applicationRepository.findById(query.getApplicationId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(app.getIsDeleted())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        return JobApplicationResponse.builder()
+                .id(app.getId())
+                .candidateId(app.getCandidateId())
+                .fullName(app.getFullName())
+                .email(app.getEmail())
+                .phoneNumber(app.getPhoneNumber())
+                .currentJobTitle(app.getCurrentJobTitle())
+                .jobId(app.getJobId())
+                .companyId(app.getCompanyId())
+                .status(app.getStatus())
+                .rating(app.getRating())
+                .appliedDate(app.getAppliedDate())
+                .followUpRequested(app.getFollowUpRequested())
+                .followUpRequestedAt(app.getFollowUpRequestedAt())
+                .coverLetter(app.getCoverLetter())
+                .linkedinUrl(app.getLinkedinUrl())
+                .portfolioUrl(app.getPortfolioUrl())
+                .resumeFileUrl(app.getResumeFileUrl())
+                .createdAt(app.getCreatedAt())
+                .updatedAt(app.getUpdatedAt())
+                .build();
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
     public MyDashboardResponse handle(GetMyDashboardQuery query) {
         List<Application> applications = applicationRepository.findAllByCandidateIdAndIsDeletedFalse(query.getCandidateId());
 
