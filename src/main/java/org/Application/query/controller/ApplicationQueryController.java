@@ -2,9 +2,11 @@ package org.Application.query.controller;
 
 import org.Application.query.model.response.MyApplicationsListResponse;
 import org.Application.query.model.response.MyApplicationResponse;
+import org.Application.query.model.response.MyApplicationHistoryListResponse;
 import org.Application.query.model.response.MyDashboardResponse;
 import org.Application.query.model.response.MyInterviewsListResponse;
 import org.Application.query.queries.GetMyApplicationDetailQuery;
+import org.Application.query.queries.GetMyApplicationHistoryQuery;
 import org.Application.query.queries.GetMyApplicationsQuery;
 import org.Application.query.queries.GetMyDashboardQuery;
 import org.Application.query.queries.GetMyInterviewsQuery;
@@ -59,6 +61,17 @@ public class ApplicationQueryController {
         return queryGateway.query(
                 new GetMyApplicationDetailQuery(applicationId, jwt.getSubject()),
                 ResponseTypes.instanceOf(MyApplicationResponse.class)
+        );
+    }
+
+    @GetMapping("/my/{applicationId}/history")
+    public CompletableFuture<MyApplicationHistoryListResponse> getMyApplicationHistory(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String applicationId
+    ) {
+        return queryGateway.query(
+                new GetMyApplicationHistoryQuery(applicationId, jwt.getSubject()),
+                ResponseTypes.instanceOf(MyApplicationHistoryListResponse.class)
         );
     }
 }

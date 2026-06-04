@@ -9,7 +9,11 @@ import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.data.InterviewSchedule;
 import org.Application.command.data.InterviewScheduleRepository;
+import org.Application.command.data.ApplicationStatusHistory;
+import org.Application.command.data.ApplicationStatusHistoryRepository;
 import org.Application.query.model.response.MyApplicationResponse;
+import org.Application.query.model.response.MyApplicationHistoryResponse;
+import org.Application.query.model.response.MyApplicationHistoryListResponse;
 import org.Application.query.model.response.MyApplicationsListResponse;
 import org.Application.query.model.response.MyDashboardResponse;
 import org.Application.query.model.response.MyInterviewResponse;
@@ -33,6 +37,9 @@ public class ApplicationQueryHandler {
 
     @Autowired
     private InterviewScheduleRepository interviewScheduleRepository;
+
+    @Autowired
+    private ApplicationStatusHistoryRepository applicationStatusHistoryRepository;
 
     @Autowired
     private JobClient jobClient;
@@ -257,5 +264,39 @@ public class ApplicationQueryHandler {
                 .collect(Collectors.toList());
 
         return new MyInterviewsListResponse(list);
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public MyApplicationHistoryListResponse handle(GetMyApplicationHistoryQuery query) {
+        Application app = applicationRepository.findById(query.getApplicationId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(app.getIsDeleted())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        if (!app.getCandidateId().equals(query.getCandidateId())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập hồ sơ này");
+        }
+
+        List<ApplicationStatusHistory> histories = applicationStatusHistoryRepository
+                .findAllByApplicationIdOrderByChangedAtDesc(query.getApplicationId());
+
+        List<MyApplicationHistoryResponse> list = histories.stream()
+                .map(history -> MyApplicationHistoryResponse.builder()
+                        .id(history.getId())
+                        .applicationId(history.getApplicationId())
+                        .oldStatus(history.getOldStatus())
+                        .newStatus(history.getNewStatus())
+                        .changedBy(history.getChangedBy())
+                        .changedAt(history.getChangedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return new MyApplicationHistoryListResponse(list);
     }
 }
