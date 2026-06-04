@@ -4,10 +4,12 @@ import org.Application.command.command.CreateApplicationCommand;
 import org.Application.command.command.WithdrawApplicationCommand;
 import org.Application.command.command.UpdateApplicationStatusCommand;
 import org.Application.command.command.UpdateApplicationRatingCommand;
+import org.Application.command.command.AddApplicationNoteCommand;
 import org.Application.command.event.ApplicationCreatedEvent;
 import org.Application.command.event.ApplicationWithdrawnEvent;
 import org.Application.command.event.ApplicationStatusUpdatedEvent;
 import org.Application.command.event.ApplicationRatingUpdatedEvent;
+import org.Application.command.event.ApplicationNoteAddedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -68,6 +70,17 @@ public class ApplicationAggregate {
                 .build());
     }
 
+    @CommandHandler
+    public void handle(AddApplicationNoteCommand command) {
+        AggregateLifecycle.apply(ApplicationNoteAddedEvent.builder()
+                .applicationId(command.getApplicationId())
+                .noteId(command.getNoteId())
+                .recruiterId(command.getRecruiterId())
+                .recruiterName(command.getRecruiterName())
+                .content(command.getContent())
+                .build());
+    }
+
     @EventSourcingHandler
     public void on(ApplicationCreatedEvent event) {
         this.applicationId = event.getApplicationId();
@@ -85,6 +98,11 @@ public class ApplicationAggregate {
 
     @EventSourcingHandler
     public void on(ApplicationRatingUpdatedEvent event) {
+        this.applicationId = event.getApplicationId();
+    }
+
+    @EventSourcingHandler
+    public void on(ApplicationNoteAddedEvent event) {
         this.applicationId = event.getApplicationId();
     }
 }

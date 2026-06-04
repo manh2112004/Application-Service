@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.Application.command.model.request.CreateApplicationRequest;
 import org.Application.command.model.request.UpdateApplicationStatusRequest;
 import org.Application.command.model.request.UpdateApplicationRatingRequest;
+import org.Application.command.model.request.CreateApplicationNoteRequest;
 import org.Application.command.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -50,5 +51,14 @@ public class ApplicationCommandController {
             @Valid @RequestBody UpdateApplicationRatingRequest request
     ) {
         return applicationService.updateApplicationRating(applicationId, request.getRating());
+    }
+
+    @PostMapping("/{applicationId}/notes")
+    public CompletableFuture<String> addApplicationNote(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String applicationId,
+            @Valid @RequestBody CreateApplicationNoteRequest request
+    ) {
+        return applicationService.addApplicationNote(applicationId, jwt.getSubject(), request);
     }
 }

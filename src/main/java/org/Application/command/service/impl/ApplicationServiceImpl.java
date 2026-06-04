@@ -4,9 +4,11 @@ import org.Application.command.command.CreateApplicationCommand;
 import org.Application.command.command.WithdrawApplicationCommand;
 import org.Application.command.command.UpdateApplicationStatusCommand;
 import org.Application.command.command.UpdateApplicationRatingCommand;
+import org.Application.command.command.AddApplicationNoteCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.model.request.CreateApplicationRequest;
+import org.Application.command.model.request.CreateApplicationNoteRequest;
 import org.Application.command.service.ApplicationService;
 import org.Application.constant.ApplicationStatus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
@@ -143,6 +145,34 @@ public class ApplicationServiceImpl implements ApplicationService {
         UpdateApplicationRatingCommand command = UpdateApplicationRatingCommand.builder()
                 .applicationId(applicationId)
                 .rating(rating)
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> addApplicationNote(String applicationId, String recruiterId, CreateApplicationNoteRequest request) {
+        if (recruiterId == null || recruiterId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng từ token");
+        }
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        String name = request.getRecruiterName() != null && !request.getRecruiterName().isBlank() 
+                ? request.getRecruiterName().trim() 
+                : "Nhà tuyển dụng";
+
+        AddApplicationNoteCommand command = AddApplicationNoteCommand.builder()
+                .applicationId(applicationId)
+                .noteId(UUID.randomUUID().toString())
+                .recruiterId(recruiterId)
+                .recruiterName(name)
+                .content(request.getContent().trim())
                 .build();
 
         return commandGateway.send(command);

@@ -4,6 +4,8 @@ import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.data.ApplicationStatusHistory;
 import org.Application.command.data.ApplicationStatusHistoryRepository;
+import org.Application.command.data.ApplicationNote;
+import org.Application.command.data.ApplicationNoteRepository;
 import org.Application.constant.ApplicationStatus;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class ApplicationEventHandler {
 
     @Autowired
     private ApplicationStatusHistoryRepository applicationStatusHistoryRepository;
+
+    @Autowired
+    private ApplicationNoteRepository applicationNoteRepository;
 
     @EventHandler
     @Transactional
@@ -104,5 +109,21 @@ public class ApplicationEventHandler {
             application.setUpdatedAt(LocalDateTime.now());
             applicationRepository.save(application);
         });
+    }
+
+    @EventHandler
+    @Transactional
+    public void on(ApplicationNoteAddedEvent event) {
+        LocalDateTime now = LocalDateTime.now();
+        ApplicationNote note = ApplicationNote.builder()
+                .id(event.getNoteId())
+                .applicationId(event.getApplicationId())
+                .recruiterId(event.getRecruiterId())
+                .recruiterName(event.getRecruiterName())
+                .content(event.getContent())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        applicationNoteRepository.save(note);
     }
 }
