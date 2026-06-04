@@ -23,14 +23,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.Application.command.data.ApplicationNote;
+import org.Application.command.data.ApplicationNoteRepository;
 import org.Application.query.model.response.JobApplicationResponse;
 import org.Application.query.model.response.JobApplicationPageResponse;
 import org.Application.query.model.response.JobPipelineResponse;
 import org.Application.query.model.response.RecruiterDashboardResponse;
+import org.Application.query.model.response.ApplicationNoteResponse;
+import org.Application.query.model.response.ApplicationNoteListResponse;
 import org.Application.query.queries.GetJobApplicationsQuery;
 import org.Application.query.queries.GetJobPipelineQuery;
 import org.Application.query.queries.GetRecruiterDashboardQuery;
 import org.Application.query.queries.SearchJobApplicationsQuery;
+import org.Application.query.queries.GetApplicationNotesQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,10 +61,43 @@ public class ApplicationQueryHandler {
     private ApplicationStatusHistoryRepository applicationStatusHistoryRepository;
 
     @Autowired
+    private ApplicationNoteRepository applicationNoteRepository;
+
+    @Autowired
     private JobClient jobClient;
 
     @Autowired
     private CompanyClient companyClient;
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public ApplicationNoteListResponse handle(GetApplicationNotesQuery query) {
+        // Validate if application exists
+        Application app = applicationRepository.findById(query.getApplicationId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(app.getIsDeleted())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        List<ApplicationNote> notes = applicationNoteRepository.findAllByApplicationIdOrderByCreatedAtDesc(query.getApplicationId());
+
+        List<ApplicationNoteResponse> list = notes.stream()
+                .map(note -> ApplicationNoteResponse.builder()
+                        .id(note.getId())
+                        .applicationId(note.getApplicationId())
+                        .recruiterId(note.getRecruiterId())
+                        .recruiterName(note.getRecruiterName())
+                        .content(note.getContent())
+                        .createdAt(note.getCreatedAt())
+                        .updatedAt(note.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return new ApplicationNoteListResponse(list);
+    }
 
     @QueryHandler
     @Transactional(readOnly = true)

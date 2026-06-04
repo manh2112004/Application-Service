@@ -6,7 +6,9 @@ import org.Application.query.model.response.MyApplicationHistoryListResponse;
 import org.Application.query.model.response.MyDashboardResponse;
 import org.Application.query.model.response.MyInterviewsListResponse;
 import org.Application.query.model.response.JobApplicationResponse;
+import org.Application.query.model.response.ApplicationNoteListResponse;
 import org.Application.query.queries.GetApplicationDetailQuery;
+import org.Application.query.queries.GetApplicationNotesQuery;
 import org.Application.query.queries.GetMyApplicationDetailQuery;
 import org.Application.query.queries.GetMyApplicationHistoryQuery;
 import org.Application.query.queries.GetMyApplicationsQuery;
@@ -36,6 +38,14 @@ public class ApplicationQueryController {
         return queryGateway.query(
                 new GetApplicationDetailQuery(applicationId),
                 ResponseTypes.instanceOf(JobApplicationResponse.class)
+        );
+    }
+
+    @GetMapping("/{applicationId}/notes")
+    public CompletableFuture<ApplicationNoteListResponse> getApplicationNotes(@PathVariable String applicationId) {
+        return queryGateway.query(
+                new GetApplicationNotesQuery(applicationId),
+                ResponseTypes.instanceOf(ApplicationNoteListResponse.class)
         );
     }
 
