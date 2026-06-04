@@ -3,6 +3,7 @@ package org.Application.command.controller;
 import jakarta.validation.Valid;
 import org.Application.command.model.request.CreateApplicationRequest;
 import org.Application.command.model.request.UpdateApplicationStatusRequest;
+import org.Application.command.model.request.UpdateApplicationRatingRequest;
 import org.Application.command.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,5 +42,13 @@ public class ApplicationCommandController {
             @Valid @RequestBody UpdateApplicationStatusRequest request
     ) {
         return applicationService.updateApplicationStatus(applicationId, jwt.getSubject(), request.getStatus());
+    }
+
+    @PutMapping("/{applicationId}/rating")
+    public CompletableFuture<String> updateApplicationRating(
+            @PathVariable String applicationId,
+            @Valid @RequestBody UpdateApplicationRatingRequest request
+    ) {
+        return applicationService.updateApplicationRating(applicationId, request.getRating());
     }
 }

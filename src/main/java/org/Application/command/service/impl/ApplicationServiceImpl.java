@@ -3,6 +3,7 @@ package org.Application.command.service.impl;
 import org.Application.command.command.CreateApplicationCommand;
 import org.Application.command.command.WithdrawApplicationCommand;
 import org.Application.command.command.UpdateApplicationStatusCommand;
+import org.Application.command.command.UpdateApplicationRatingCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.model.request.CreateApplicationRequest;
@@ -125,6 +126,23 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .applicationId(applicationId)
                 .changedBy(changedBy)
                 .status(status)
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> updateApplicationRating(String applicationId, Double rating) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        UpdateApplicationRatingCommand command = UpdateApplicationRatingCommand.builder()
+                .applicationId(applicationId)
+                .rating(rating)
                 .build();
 
         return commandGateway.send(command);

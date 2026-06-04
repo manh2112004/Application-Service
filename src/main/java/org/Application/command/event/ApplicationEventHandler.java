@@ -95,4 +95,14 @@ public class ApplicationEventHandler {
             applicationStatusHistoryRepository.save(history);
         });
     }
+
+    @EventHandler
+    @Transactional
+    public void on(ApplicationRatingUpdatedEvent event) {
+        applicationRepository.findById(event.getApplicationId()).ifPresent(application -> {
+            application.setRating(event.getRating());
+            application.setUpdatedAt(LocalDateTime.now());
+            applicationRepository.save(application);
+        });
+    }
 }

@@ -8,4 +8,5 @@ public interface ApplicationService {
     CompletableFuture<String> createApplication(String candidateId, CreateApplicationRequest request);
     CompletableFuture<String> withdrawApplication(String candidateId, String applicationId);
     CompletableFuture<String> updateApplicationStatus(String applicationId, String changedBy, ApplicationStatus status);
+    CompletableFuture<String> updateApplicationRating(String applicationId, Double rating);
 }
