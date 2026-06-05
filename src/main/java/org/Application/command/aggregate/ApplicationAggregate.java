@@ -7,6 +7,7 @@ import org.Application.command.command.UpdateApplicationRatingCommand;
 import org.Application.command.command.AddApplicationNoteCommand;
 import org.Application.command.command.UpdateApplicationNoteCommand;
 import org.Application.command.command.DeleteApplicationNoteCommand;
+import org.Application.command.command.ScheduleInterviewCommand;
 import org.Application.command.event.ApplicationCreatedEvent;
 import org.Application.command.event.ApplicationWithdrawnEvent;
 import org.Application.command.event.ApplicationStatusUpdatedEvent;
@@ -14,6 +15,7 @@ import org.Application.command.event.ApplicationRatingUpdatedEvent;
 import org.Application.command.event.ApplicationNoteAddedEvent;
 import org.Application.command.event.ApplicationNoteUpdatedEvent;
 import org.Application.command.event.ApplicationNoteDeletedEvent;
+import org.Application.command.event.InterviewScheduledEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -102,6 +104,21 @@ public class ApplicationAggregate {
                 .build());
     }
 
+    @CommandHandler
+    public void handle(ScheduleInterviewCommand command) {
+        AggregateLifecycle.apply(InterviewScheduledEvent.builder()
+                .applicationId(command.getApplicationId())
+                .interviewId(command.getInterviewId())
+                .interviewerId(command.getInterviewerId())
+                .interviewerName(command.getInterviewerName())
+                .title(command.getTitle())
+                .interviewDate(command.getInterviewDate())
+                .startTime(command.getStartTime())
+                .endTime(command.getEndTime())
+                .location(command.getLocation())
+                .build());
+    }
+
     @EventSourcingHandler
     public void on(ApplicationCreatedEvent event) {
         this.applicationId = event.getApplicationId();
@@ -134,6 +151,11 @@ public class ApplicationAggregate {
 
     @EventSourcingHandler
     public void on(ApplicationNoteDeletedEvent event) {
+        this.applicationId = event.getApplicationId();
+    }
+
+    @EventSourcingHandler
+    public void on(InterviewScheduledEvent event) {
         this.applicationId = event.getApplicationId();
     }
 }

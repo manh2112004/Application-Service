@@ -6,7 +6,10 @@ import org.Application.command.data.ApplicationStatusHistory;
 import org.Application.command.data.ApplicationStatusHistoryRepository;
 import org.Application.command.data.ApplicationNote;
 import org.Application.command.data.ApplicationNoteRepository;
+import org.Application.command.data.InterviewSchedule;
+import org.Application.command.data.InterviewScheduleRepository;
 import org.Application.constant.ApplicationStatus;
+import org.Application.constant.InterviewStatus;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,9 @@ public class ApplicationEventHandler {
 
     @Autowired
     private ApplicationNoteRepository applicationNoteRepository;
+
+    @Autowired
+    private InterviewScheduleRepository interviewScheduleRepository;
 
     @EventHandler
     @Transactional
@@ -141,5 +147,26 @@ public class ApplicationEventHandler {
     @Transactional
     public void on(ApplicationNoteDeletedEvent event) {
         applicationNoteRepository.deleteById(event.getNoteId());
+    }
+
+    @EventHandler
+    @Transactional
+    public void on(InterviewScheduledEvent event) {
+        LocalDateTime now = LocalDateTime.now();
+        InterviewSchedule schedule = InterviewSchedule.builder()
+                .id(event.getInterviewId())
+                .applicationId(event.getApplicationId())
+                .interviewerId(event.getInterviewerId())
+                .interviewerName(event.getInterviewerName())
+                .title(event.getTitle())
+                .location(event.getLocation())
+                .interviewDate(event.getInterviewDate())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .status(InterviewStatus.SCHEDULED)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        interviewScheduleRepository.save(schedule);
     }
 }

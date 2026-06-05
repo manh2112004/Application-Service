@@ -7,6 +7,7 @@ import org.Application.command.command.UpdateApplicationRatingCommand;
 import org.Application.command.command.AddApplicationNoteCommand;
 import org.Application.command.command.UpdateApplicationNoteCommand;
 import org.Application.command.command.DeleteApplicationNoteCommand;
+import org.Application.command.command.ScheduleInterviewCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.data.ApplicationNote;
@@ -14,6 +15,7 @@ import org.Application.command.data.ApplicationNoteRepository;
 import org.Application.command.model.request.CreateApplicationRequest;
 import org.Application.command.model.request.CreateApplicationNoteRequest;
 import org.Application.command.model.request.UpdateApplicationNoteRequest;
+import org.Application.command.model.request.ScheduleInterviewRequest;
 import org.Application.command.service.ApplicationService;
 import org.Application.constant.ApplicationStatus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
@@ -42,6 +44,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private org.Application.client.CompanyClient companyClient;
+
+    @Autowired
+    private org.Application.client.ProfileClient profileClient;
 
     @Override
     public CompletableFuture<String> createApplication(String candidateId, CreateApplicationRequest request) {
@@ -240,6 +245,40 @@ public class ApplicationServiceImpl implements ApplicationService {
         DeleteApplicationNoteCommand command = DeleteApplicationNoteCommand.builder()
                 .applicationId(note.getApplicationId())
                 .noteId(noteId)
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> scheduleInterview(String applicationId, ScheduleInterviewRequest request) {
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(application.getIsDeleted())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        // Validate if interviewer exists in Profile-Service
+        org.Application.client.dto.ProfileResponse profile = profileClient.getProfileByUserId(request.getInterviewerId().trim());
+        if (profile == null || profile.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Người phỏng vấn không tồn tại");
+        }
+
+        String interviewerName = profile.getFullName() != null && !profile.getFullName().isBlank()
+                ? profile.getFullName().trim()
+                : "Người phỏng vấn";
+
+        ScheduleInterviewCommand command = ScheduleInterviewCommand.builder()
+                .applicationId(applicationId)
+                .interviewId(UUID.randomUUID().toString())
+                .interviewerId(request.getInterviewerId().trim())
+                .interviewerName(interviewerName)
+                .title(request.getTitle().trim())
+                .interviewDate(request.getInterviewDate())
+                .startTime(request.getStartTime())
+                .endTime(request.getEndTime())
+                .location(request.getLocation().trim())
                 .build();
 
         return commandGateway.send(command);

@@ -5,6 +5,7 @@ import org.Application.command.model.request.CreateApplicationRequest;
 import org.Application.command.model.request.UpdateApplicationStatusRequest;
 import org.Application.command.model.request.UpdateApplicationRatingRequest;
 import org.Application.command.model.request.CreateApplicationNoteRequest;
+import org.Application.command.model.request.ScheduleInterviewRequest;
 import org.Application.command.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -60,5 +61,14 @@ public class ApplicationCommandController {
             @Valid @RequestBody CreateApplicationNoteRequest request
     ) {
         return applicationService.addApplicationNote(applicationId, jwt.getSubject(), request);
+    }
+
+    @PostMapping("/{applicationId}/interviews")
+    public CompletableFuture<String> scheduleInterview(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String applicationId,
+            @Valid @RequestBody ScheduleInterviewRequest request
+    ) {
+        return applicationService.scheduleInterview(applicationId, request);
     }
 }
