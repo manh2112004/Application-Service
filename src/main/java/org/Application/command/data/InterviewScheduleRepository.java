@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface InterviewScheduleRepository extends JpaRepository<InterviewSchedule, String> {
     List<InterviewSchedule> findAllByApplicationIdIn(List<String> applicationIds);
+    List<InterviewSchedule> findAllByApplicationIdOrderByInterviewDateDescStartTimeDesc(String applicationId);
 }

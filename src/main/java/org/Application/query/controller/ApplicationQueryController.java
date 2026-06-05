@@ -7,8 +7,10 @@ import org.Application.query.model.response.MyDashboardResponse;
 import org.Application.query.model.response.MyInterviewsListResponse;
 import org.Application.query.model.response.JobApplicationResponse;
 import org.Application.query.model.response.ApplicationNoteListResponse;
+import org.Application.query.model.response.ApplicationInterviewListResponse;
 import org.Application.query.queries.GetApplicationDetailQuery;
 import org.Application.query.queries.GetApplicationNotesQuery;
+import org.Application.query.queries.GetApplicationInterviewsQuery;
 import org.Application.query.queries.GetMyApplicationDetailQuery;
 import org.Application.query.queries.GetMyApplicationHistoryQuery;
 import org.Application.query.queries.GetMyApplicationsQuery;
@@ -46,6 +48,14 @@ public class ApplicationQueryController {
         return queryGateway.query(
                 new GetApplicationNotesQuery(applicationId),
                 ResponseTypes.instanceOf(ApplicationNoteListResponse.class)
+        );
+    }
+
+    @GetMapping("/{applicationId}/interviews")
+    public CompletableFuture<ApplicationInterviewListResponse> getApplicationInterviews(@PathVariable String applicationId) {
+        return queryGateway.query(
+                new GetApplicationInterviewsQuery(applicationId),
+                ResponseTypes.instanceOf(ApplicationInterviewListResponse.class)
         );
     }
 

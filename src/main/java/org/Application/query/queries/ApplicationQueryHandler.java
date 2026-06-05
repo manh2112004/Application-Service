@@ -31,11 +31,14 @@ import org.Application.query.model.response.JobPipelineResponse;
 import org.Application.query.model.response.RecruiterDashboardResponse;
 import org.Application.query.model.response.ApplicationNoteResponse;
 import org.Application.query.model.response.ApplicationNoteListResponse;
+import org.Application.query.model.response.ApplicationInterviewResponse;
+import org.Application.query.model.response.ApplicationInterviewListResponse;
 import org.Application.query.queries.GetJobApplicationsQuery;
 import org.Application.query.queries.GetJobPipelineQuery;
 import org.Application.query.queries.GetRecruiterDashboardQuery;
 import org.Application.query.queries.SearchJobApplicationsQuery;
 import org.Application.query.queries.GetApplicationNotesQuery;
+import org.Application.query.queries.GetApplicationInterviewsQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -97,6 +100,42 @@ public class ApplicationQueryHandler {
                 .collect(Collectors.toList());
 
         return new ApplicationNoteListResponse(list);
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public ApplicationInterviewListResponse handle(GetApplicationInterviewsQuery query) {
+        // Validate if application exists and is not deleted
+        Application app = applicationRepository.findById(query.getApplicationId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển"));
+
+        if (Boolean.TRUE.equals(app.getIsDeleted())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ ứng tuyển");
+        }
+
+        List<InterviewSchedule> schedules = interviewScheduleRepository
+                .findAllByApplicationIdOrderByInterviewDateDescStartTimeDesc(query.getApplicationId());
+
+        List<ApplicationInterviewResponse> list = schedules.stream()
+                .map(sch -> ApplicationInterviewResponse.builder()
+                        .id(sch.getId())
+                        .applicationId(sch.getApplicationId())
+                        .interviewerId(sch.getInterviewerId())
+                        .interviewerName(sch.getInterviewerName())
+                        .title(sch.getTitle())
+                        .interviewDate(sch.getInterviewDate())
+                        .startTime(sch.getStartTime())
+                        .endTime(sch.getEndTime())
+                        .location(sch.getLocation())
+                        .status(sch.getStatus())
+                        .createdAt(sch.getCreatedAt())
+                        .updatedAt(sch.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return new ApplicationInterviewListResponse(list);
     }
 
     @QueryHandler
