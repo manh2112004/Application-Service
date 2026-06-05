@@ -1,7 +1,9 @@
 package org.Application.query.controller;
 
 import org.Application.query.model.response.ApplicationInterviewResponse;
+import org.Application.query.model.response.InterviewFeedbackListResponse;
 import org.Application.query.queries.GetInterviewDetailQuery;
+import org.Application.query.queries.GetInterviewFeedbacksQuery;
 import org.axonframework.messaging.responsetypes.ResponseTypes;
 import org.axonframework.queryhandling.QueryGateway;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,14 @@ public class InterviewQueryController {
         return queryGateway.query(
                 new GetInterviewDetailQuery(interviewId),
                 ResponseTypes.instanceOf(ApplicationInterviewResponse.class)
+        );
+    }
+
+    @GetMapping("/{interviewId}/feedbacks")
+    public CompletableFuture<InterviewFeedbackListResponse> getInterviewFeedbacks(@PathVariable String interviewId) {
+        return queryGateway.query(
+                new GetInterviewFeedbacksQuery(interviewId),
+                ResponseTypes.instanceOf(InterviewFeedbackListResponse.class)
         );
     }
 }

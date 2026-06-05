@@ -38,6 +38,11 @@ import org.Application.query.queries.GetJobPipelineQuery;
 import org.Application.query.queries.GetRecruiterDashboardQuery;
 import org.Application.query.queries.SearchJobApplicationsQuery;
 import org.Application.query.queries.GetApplicationNotesQuery;
+import org.Application.query.queries.GetInterviewFeedbacksQuery;
+import org.Application.query.model.response.InterviewFeedbackListResponse;
+import org.Application.query.model.response.InterviewFeedbackResponse;
+import org.Application.command.data.InterviewFeedback;
+import org.Application.command.data.InterviewFeedbackRepository;
 import org.Application.query.queries.GetApplicationInterviewsQuery;
 import org.Application.query.queries.GetInterviewDetailQuery;
 import org.springframework.data.domain.Page;
@@ -72,6 +77,9 @@ public class ApplicationQueryHandler {
 
     @Autowired
     private CompanyClient companyClient;
+
+    @Autowired
+    private InterviewFeedbackRepository interviewFeedbackRepository;
 
     @QueryHandler
     @Transactional(readOnly = true)
@@ -160,6 +168,33 @@ public class ApplicationQueryHandler {
                 .createdAt(sch.getCreatedAt())
                 .updatedAt(sch.getUpdatedAt())
                 .build();
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public InterviewFeedbackListResponse handle(GetInterviewFeedbacksQuery query) {
+        // Validate if interview exists
+        interviewScheduleRepository.findById(query.getInterviewId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy lịch phỏng vấn"));
+
+        List<InterviewFeedback> feedbacks = interviewFeedbackRepository.findAllByInterviewScheduleId(query.getInterviewId());
+
+        List<InterviewFeedbackResponse> list = feedbacks.stream()
+                .map(fb -> InterviewFeedbackResponse.builder()
+                        .id(fb.getId())
+                        .interviewScheduleId(fb.getInterviewScheduleId())
+                        .applicationId(fb.getApplicationId())
+                        .reviewerId(fb.getReviewerId())
+                        .reviewerName(fb.getReviewerName())
+                        .score(fb.getScore())
+                        .comment(fb.getComment())
+                        .createdAt(fb.getCreatedAt())
+                        .updatedAt(fb.getUpdatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        return new InterviewFeedbackListResponse(list);
     }
 
     @QueryHandler
