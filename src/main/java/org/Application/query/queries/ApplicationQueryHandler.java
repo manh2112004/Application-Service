@@ -39,6 +39,7 @@ import org.Application.query.queries.GetRecruiterDashboardQuery;
 import org.Application.query.queries.SearchJobApplicationsQuery;
 import org.Application.query.queries.GetApplicationNotesQuery;
 import org.Application.query.queries.GetApplicationInterviewsQuery;
+import org.Application.query.queries.GetInterviewDetailQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -136,6 +137,29 @@ public class ApplicationQueryHandler {
                 .collect(Collectors.toList());
 
         return new ApplicationInterviewListResponse(list);
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public ApplicationInterviewResponse handle(GetInterviewDetailQuery query) {
+        InterviewSchedule sch = interviewScheduleRepository.findById(query.getInterviewId())
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy lịch phỏng vấn"));
+
+        return ApplicationInterviewResponse.builder()
+                .id(sch.getId())
+                .applicationId(sch.getApplicationId())
+                .interviewerId(sch.getInterviewerId())
+                .interviewerName(sch.getInterviewerName())
+                .title(sch.getTitle())
+                .interviewDate(sch.getInterviewDate())
+                .startTime(sch.getStartTime())
+                .endTime(sch.getEndTime())
+                .location(sch.getLocation())
+                .status(sch.getStatus())
+                .createdAt(sch.getCreatedAt())
+                .updatedAt(sch.getUpdatedAt())
+                .build();
     }
 
     @QueryHandler
