@@ -45,6 +45,8 @@ import org.Application.command.data.InterviewFeedback;
 import org.Application.command.data.InterviewFeedbackRepository;
 import org.Application.query.queries.GetApplicationInterviewsQuery;
 import org.Application.query.queries.GetInterviewDetailQuery;
+import org.Application.query.queries.GetJobAnalyticsQuery;
+import org.Application.query.model.response.JobAnalyticsResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -240,6 +242,64 @@ public class ApplicationQueryHandler {
                 .declinedCount(declined)
                 .unsuitableCount(unsuitable)
                 .withdrawnCount(withdrawn)
+                .build();
+    }
+
+    @QueryHandler
+    @Transactional(readOnly = true)
+    public JobAnalyticsResponse handle(GetJobAnalyticsQuery query) {
+        // Validate if job exists in Job-Service
+        jobClient.getJob(query.getJobId());
+
+        List<Application> applications = applicationRepository.findAllByJobIdAndIsDeletedFalse(query.getJobId());
+
+        long total = applications.size();
+        long inReview = 0;
+        long shortlisted = 0;
+        long interview = 0;
+        long assessment = 0;
+        long offered = 0;
+        long hired = 0;
+        long declined = 0;
+        long unsuitable = 0;
+        long withdrawn = 0;
+        double sumRating = 0;
+        long ratedCount = 0;
+
+        for (Application app : applications) {
+            if (app.getRating() != null) {
+                sumRating += app.getRating();
+                ratedCount++;
+            }
+            if (app.getStatus() == null) continue;
+            switch (app.getStatus()) {
+                case IN_REVIEW -> inReview++;
+                case SHORTLISTED -> shortlisted++;
+                case INTERVIEW -> interview++;
+                case ASSESSMENT -> assessment++;
+                case OFFERED -> offered++;
+                case HIRED -> hired++;
+                case DECLINED -> declined++;
+                case UNSUITABLE -> unsuitable++;
+                case WITHDRAWN -> withdrawn++;
+            }
+        }
+
+        double averageRating = ratedCount > 0 ? sumRating / ratedCount : 0.0;
+
+        return JobAnalyticsResponse.builder()
+                .jobId(query.getJobId())
+                .totalApplications(total)
+                .inReviewCount(inReview)
+                .shortlistedCount(shortlisted)
+                .interviewCount(interview)
+                .assessmentCount(assessment)
+                .offeredCount(offered)
+                .hiredCount(hired)
+                .declinedCount(declined)
+                .unsuitableCount(unsuitable)
+                .withdrawnCount(withdrawn)
+                .averageRating(averageRating)
                 .build();
     }
 
