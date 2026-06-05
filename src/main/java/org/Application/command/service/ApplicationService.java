@@ -18,4 +18,5 @@ public interface ApplicationService {
     CompletableFuture<String> deleteApplicationNote(String noteId, String recruiterId);
     CompletableFuture<String> scheduleInterview(String applicationId, ScheduleInterviewRequest request);
     CompletableFuture<String> updateInterview(String interviewId, UpdateInterviewRequest request);
+    CompletableFuture<String> deleteInterview(String interviewId);
 }

@@ -22,4 +22,9 @@ public class InterviewCommandController {
     ) {
         return applicationService.updateInterview(interviewId, request);
     }
+
+    @DeleteMapping("/{interviewId}")
+    public CompletableFuture<String> deleteInterview(@PathVariable String interviewId) {
+        return applicationService.deleteInterview(interviewId);
+    }
 }

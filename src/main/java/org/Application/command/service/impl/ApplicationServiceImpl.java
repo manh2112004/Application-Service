@@ -9,6 +9,7 @@ import org.Application.command.command.UpdateApplicationNoteCommand;
 import org.Application.command.command.DeleteApplicationNoteCommand;
 import org.Application.command.command.ScheduleInterviewCommand;
 import org.Application.command.command.UpdateInterviewCommand;
+import org.Application.command.command.DeleteInterviewCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.data.ApplicationNote;
@@ -307,6 +308,19 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .endTime(request.getEndTime())
                 .location(request.getLocation().trim())
                 .status(request.getStatus())
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> deleteInterview(String interviewId) {
+        InterviewSchedule schedule = interviewScheduleRepository.findById(interviewId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lịch phỏng vấn"));
+
+        DeleteInterviewCommand command = DeleteInterviewCommand.builder()
+                .applicationId(schedule.getApplicationId())
+                .interviewId(interviewId)
                 .build();
 
         return commandGateway.send(command);

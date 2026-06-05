@@ -18,6 +18,8 @@ import org.Application.command.event.ApplicationNoteUpdatedEvent;
 import org.Application.command.event.ApplicationNoteDeletedEvent;
 import org.Application.command.event.InterviewScheduledEvent;
 import org.Application.command.event.InterviewUpdatedEvent;
+import org.Application.command.command.DeleteInterviewCommand;
+import org.Application.command.event.InterviewDeletedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -137,6 +139,14 @@ public class ApplicationAggregate {
                 .build());
     }
 
+    @CommandHandler
+    public void handle(DeleteInterviewCommand command) {
+        AggregateLifecycle.apply(InterviewDeletedEvent.builder()
+                .applicationId(command.getApplicationId())
+                .interviewId(command.getInterviewId())
+                .build());
+    }
+
     @EventSourcingHandler
     public void on(ApplicationCreatedEvent event) {
         this.applicationId = event.getApplicationId();
@@ -179,6 +189,11 @@ public class ApplicationAggregate {
 
     @EventSourcingHandler
     public void on(InterviewUpdatedEvent event) {
+        this.applicationId = event.getApplicationId();
+    }
+
+    @EventSourcingHandler
+    public void on(InterviewDeletedEvent event) {
         this.applicationId = event.getApplicationId();
     }
 }

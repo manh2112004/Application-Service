@@ -12,6 +12,7 @@ import org.Application.constant.ApplicationStatus;
 import org.Application.constant.InterviewStatus;
 import org.Application.command.event.InterviewScheduledEvent;
 import org.Application.command.event.InterviewUpdatedEvent;
+import org.Application.command.event.InterviewDeletedEvent;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -187,5 +188,11 @@ public class ApplicationEventHandler {
             schedule.setUpdatedAt(LocalDateTime.now());
             interviewScheduleRepository.save(schedule);
         });
+    }
+
+    @EventHandler
+    @Transactional
+    public void on(InterviewDeletedEvent event) {
+        interviewScheduleRepository.deleteById(event.getInterviewId());
     }
 }
