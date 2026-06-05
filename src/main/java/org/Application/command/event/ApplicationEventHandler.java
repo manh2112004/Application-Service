@@ -10,6 +10,8 @@ import org.Application.command.data.InterviewSchedule;
 import org.Application.command.data.InterviewScheduleRepository;
 import org.Application.constant.ApplicationStatus;
 import org.Application.constant.InterviewStatus;
+import org.Application.command.event.InterviewScheduledEvent;
+import org.Application.command.event.InterviewUpdatedEvent;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -168,5 +170,22 @@ public class ApplicationEventHandler {
                 .updatedAt(now)
                 .build();
         interviewScheduleRepository.save(schedule);
+    }
+
+    @EventHandler
+    @Transactional
+    public void on(InterviewUpdatedEvent event) {
+        interviewScheduleRepository.findById(event.getInterviewId()).ifPresent(schedule -> {
+            schedule.setInterviewerId(event.getInterviewerId());
+            schedule.setInterviewerName(event.getInterviewerName());
+            schedule.setTitle(event.getTitle());
+            schedule.setLocation(event.getLocation());
+            schedule.setInterviewDate(event.getInterviewDate());
+            schedule.setStartTime(event.getStartTime());
+            schedule.setEndTime(event.getEndTime());
+            schedule.setStatus(event.getStatus());
+            schedule.setUpdatedAt(LocalDateTime.now());
+            interviewScheduleRepository.save(schedule);
+        });
     }
 }
