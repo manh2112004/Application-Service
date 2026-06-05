@@ -5,6 +5,7 @@ import org.Application.command.model.request.CreateApplicationNoteRequest;
 import org.Application.command.model.request.UpdateApplicationNoteRequest;
 import org.Application.command.model.request.ScheduleInterviewRequest;
 import org.Application.command.model.request.UpdateInterviewRequest;
+import org.Application.command.model.request.CreateInterviewFeedbackRequest;
 import org.Application.constant.ApplicationStatus;
 import java.util.concurrent.CompletableFuture;
 
@@ -19,4 +20,5 @@ public interface ApplicationService {
     CompletableFuture<String> scheduleInterview(String applicationId, ScheduleInterviewRequest request);
     CompletableFuture<String> updateInterview(String interviewId, UpdateInterviewRequest request);
     CompletableFuture<String> deleteInterview(String interviewId);
+    CompletableFuture<String> addInterviewFeedback(String interviewId, String reviewerId, CreateInterviewFeedbackRequest request);
 }

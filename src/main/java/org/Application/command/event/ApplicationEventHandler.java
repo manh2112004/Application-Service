@@ -13,6 +13,9 @@ import org.Application.constant.InterviewStatus;
 import org.Application.command.event.InterviewScheduledEvent;
 import org.Application.command.event.InterviewUpdatedEvent;
 import org.Application.command.event.InterviewDeletedEvent;
+import org.Application.command.data.InterviewFeedback;
+import org.Application.command.data.InterviewFeedbackRepository;
+import org.Application.command.event.InterviewFeedbackAddedEvent;
 import org.axonframework.eventhandling.EventHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,6 +39,9 @@ public class ApplicationEventHandler {
 
     @Autowired
     private InterviewScheduleRepository interviewScheduleRepository;
+
+    @Autowired
+    private InterviewFeedbackRepository interviewFeedbackRepository;
 
     @EventHandler
     @Transactional
@@ -194,5 +200,23 @@ public class ApplicationEventHandler {
     @Transactional
     public void on(InterviewDeletedEvent event) {
         interviewScheduleRepository.deleteById(event.getInterviewId());
+    }
+
+    @EventHandler
+    @Transactional
+    public void on(InterviewFeedbackAddedEvent event) {
+        LocalDateTime now = LocalDateTime.now();
+        InterviewFeedback feedback = InterviewFeedback.builder()
+                .id(event.getFeedbackId())
+                .interviewScheduleId(event.getInterviewScheduleId())
+                .applicationId(event.getApplicationId())
+                .reviewerId(event.getReviewerId())
+                .reviewerName(event.getReviewerName())
+                .score(event.getScore())
+                .comment(event.getComment())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+        interviewFeedbackRepository.save(feedback);
     }
 }

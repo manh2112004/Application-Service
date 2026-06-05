@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CompletionException.class)
     public ResponseEntity<Map<String, Object>> handleCompletionException(CompletionException ex) {
-        Throwable cause = ex.getCause();
+        Throwable cause = unwrap(ex);
         if (cause instanceof ResponseStatusException responseStatusException) {
             return handleResponseStatusException(responseStatusException);
         }
@@ -34,6 +34,17 @@ public class GlobalExceptionHandler {
         log.error("Async request failed", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(buildBody(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Lỗi hệ thống"));
+    }
+
+    private Throwable unwrap(Throwable ex) {
+        Throwable cause = ex;
+        while (cause != null && (cause instanceof CompletionException || cause.getClass().getName().contains("ExecutionException"))) {
+            if (cause.getCause() == null) {
+                break;
+            }
+            cause = cause.getCause();
+        }
+        return cause;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

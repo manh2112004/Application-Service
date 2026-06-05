@@ -10,6 +10,7 @@ import org.Application.command.command.DeleteApplicationNoteCommand;
 import org.Application.command.command.ScheduleInterviewCommand;
 import org.Application.command.command.UpdateInterviewCommand;
 import org.Application.command.command.DeleteInterviewCommand;
+import org.Application.command.command.AddInterviewFeedbackCommand;
 import org.Application.command.data.Application;
 import org.Application.command.data.ApplicationRepository;
 import org.Application.command.data.ApplicationNote;
@@ -21,6 +22,7 @@ import org.Application.command.model.request.CreateApplicationNoteRequest;
 import org.Application.command.model.request.UpdateApplicationNoteRequest;
 import org.Application.command.model.request.ScheduleInterviewRequest;
 import org.Application.command.model.request.UpdateInterviewRequest;
+import org.Application.command.model.request.CreateInterviewFeedbackRequest;
 import org.Application.command.service.ApplicationService;
 import org.Application.constant.ApplicationStatus;
 import org.axonframework.commandhandling.gateway.CommandGateway;
@@ -321,6 +323,34 @@ public class ApplicationServiceImpl implements ApplicationService {
         DeleteInterviewCommand command = DeleteInterviewCommand.builder()
                 .applicationId(schedule.getApplicationId())
                 .interviewId(interviewId)
+                .build();
+
+        return commandGateway.send(command);
+    }
+
+    @Override
+    public CompletableFuture<String> addInterviewFeedback(String interviewId, String reviewerId, CreateInterviewFeedbackRequest request) {
+        InterviewSchedule schedule = interviewScheduleRepository.findById(interviewId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lịch phỏng vấn"));
+
+        // Validate if reviewer exists in Profile-Service
+        org.Application.client.dto.ProfileResponse profile = profileClient.getProfileByUserId(reviewerId);
+        if (profile == null || profile.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Người đánh giá không tồn tại");
+        }
+
+        String reviewerName = profile.getFullName() != null && !profile.getFullName().isBlank()
+                ? profile.getFullName().trim()
+                : "Người đánh giá";
+
+        AddInterviewFeedbackCommand command = AddInterviewFeedbackCommand.builder()
+                .applicationId(schedule.getApplicationId())
+                .feedbackId(UUID.randomUUID().toString())
+                .interviewScheduleId(interviewId)
+                .reviewerId(reviewerId)
+                .reviewerName(reviewerName)
+                .score(request.getScore())
+                .comment(request.getComment().trim())
                 .build();
 
         return commandGateway.send(command);

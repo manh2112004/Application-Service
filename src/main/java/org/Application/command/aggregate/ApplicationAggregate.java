@@ -19,7 +19,9 @@ import org.Application.command.event.ApplicationNoteDeletedEvent;
 import org.Application.command.event.InterviewScheduledEvent;
 import org.Application.command.event.InterviewUpdatedEvent;
 import org.Application.command.command.DeleteInterviewCommand;
+import org.Application.command.command.AddInterviewFeedbackCommand;
 import org.Application.command.event.InterviewDeletedEvent;
+import org.Application.command.event.InterviewFeedbackAddedEvent;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
 import org.axonframework.modelling.command.AggregateIdentifier;
@@ -147,6 +149,19 @@ public class ApplicationAggregate {
                 .build());
     }
 
+    @CommandHandler
+    public void handle(AddInterviewFeedbackCommand command) {
+        AggregateLifecycle.apply(InterviewFeedbackAddedEvent.builder()
+                .applicationId(command.getApplicationId())
+                .feedbackId(command.getFeedbackId())
+                .interviewScheduleId(command.getInterviewScheduleId())
+                .reviewerId(command.getReviewerId())
+                .reviewerName(command.getReviewerName())
+                .score(command.getScore())
+                .comment(command.getComment())
+                .build());
+    }
+
     @EventSourcingHandler
     public void on(ApplicationCreatedEvent event) {
         this.applicationId = event.getApplicationId();
@@ -194,6 +209,11 @@ public class ApplicationAggregate {
 
     @EventSourcingHandler
     public void on(InterviewDeletedEvent event) {
+        this.applicationId = event.getApplicationId();
+    }
+
+    @EventSourcingHandler
+    public void on(InterviewFeedbackAddedEvent event) {
         this.applicationId = event.getApplicationId();
     }
 }
